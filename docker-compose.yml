@@ -1,0 +1,14 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # All auth/API calls run in the browser, not inside this container, so
+      # this only needs to be reachable from your host machine — point it at
+      # wherever the Django backend's container publishes its port.
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
