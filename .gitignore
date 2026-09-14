@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent-generated docs (re-created locally by `next dev`)
+AGENTS.md
+CLAUDE.md
