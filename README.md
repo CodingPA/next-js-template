@@ -1,6 +1,7 @@
 # next-js-template
 
-A Next.js starter that pairs with the Django backend template: session-cookie
+A Next.js starter that pairs with the
+[Django backend template](https://github.com/CodingPA/django-backend-template): session-cookie
 auth (email/password + Google) via `django-allauth`, CSRF-aware fetch
 helpers, and a websocket helper with the reconnect/close-code rules the
 backend expects. Meant to be forked per-project, not used as-is.
@@ -54,7 +55,7 @@ whether or not the backend itself is also in Docker. Override it with an
 
 - Both the frontend and the backend need to be reachable under the same
   parent domain in production for the session cookie to be sent — see the
-  backend's frontend contract doc for details.
+  [backend](https://github.com/CodingPA/django-backend-template)'s frontend contract doc for details.
 - Server components/route handlers don't forward cookies automatically; keep
   auth-bound calls on the client (all the example pages here are
   `"use client"`).
