@@ -20,6 +20,12 @@ const ERROR_MESSAGES: Record<string, string> = {
   signup_closed: "Sign-ups are currently closed.",
 }
 
+function errorMessage(err: unknown) {
+  if (!(err instanceof ApiError)) return "Something went wrong."
+  const code = err.code()
+  return (code && ERROR_MESSAGES[code]) || err.message
+}
+
 export default function SignupPage() {
   const router = useRouter()
   const { refresh } = useAuth()
@@ -28,6 +34,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("")
   const [accessCode, setAccessCode] = useState("")
   const [accessCodeValid, setAccessCodeValid] = useState(false)
+  const [accessCodeError, setAccessCodeError] = useState<string | null>(null)
   const [emailHint, setEmailHint] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -59,8 +66,9 @@ export default function SignupPage() {
     try {
       await validateAccessCode(accessCode)
       setAccessCodeValid(true)
-    } catch {
+    } catch (err) {
       setAccessCodeValid(false)
+      setAccessCodeError(errorMessage(err))
     }
   }
 
@@ -73,12 +81,12 @@ export default function SignupPage() {
       await refresh()
       router.push("/")
     } catch (err) {
-      if (err instanceof ApiError) {
-        const code = err.code()
-        setError((code && ERROR_MESSAGES[code]) ?? err.message)
-      } else {
-        setError("Something went wrong.")
-      }
+      // allauth answers a closed signup with a bare 403 — no error code.
+      setError(
+        err instanceof ApiError && err.status === 403
+          ? ERROR_MESSAGES.signup_closed
+          : errorMessage(err)
+      )
     } finally {
       setSubmitting(false)
     }
@@ -121,10 +129,17 @@ export default function SignupPage() {
             placeholder="Access code"
             required
             value={accessCode}
-            onChange={(e) => setAccessCode(e.target.value)}
+            onChange={(e) => {
+              setAccessCode(e.target.value)
+              setAccessCodeValid(false)
+              setAccessCodeError(null)
+            }}
             onBlur={onAccessCodeBlur}
             className="rounded border px-3 py-2"
           />
+        )}
+        {accessCodeError && (
+          <p className="text-sm text-red-600">{accessCodeError}</p>
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button

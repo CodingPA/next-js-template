@@ -21,14 +21,25 @@ export async function api(path: string, init: RequestInit = {}) {
   })
 }
 
+// allauth errors are {status, errors: [{message, code, param?}]}; this
+// project's own DRF views return {detail, code}. Normalize both to `errors`.
+function toErrors(body: unknown): AllauthError["errors"] {
+  if (!body || typeof body !== "object") return []
+  const b = body as Partial<AllauthError> & { detail?: string; code?: string }
+  if (b.errors) return b.errors
+  if (b.detail) return [{ message: b.detail, code: b.code ?? "" }]
+  return []
+}
+
 export class ApiError extends Error {
   status: number
   errors: AllauthError["errors"]
 
-  constructor(body: AllauthError) {
-    super(body.errors?.[0]?.message ?? "Request failed")
-    this.status = body.status
-    this.errors = body.errors ?? []
+  constructor(status: number, body: unknown) {
+    const errors = toErrors(body)
+    super(errors[0]?.message ?? "Request failed")
+    this.status = status
+    this.errors = errors
   }
 
   code() {
@@ -38,7 +49,7 @@ export class ApiError extends Error {
 
 async function parseOrThrow<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => null)
-  if (!res.ok) throw new ApiError(body ?? { status: res.status, errors: [] })
+  if (!res.ok) throw new ApiError(res.status, body)
   return body as T
 }
 
@@ -55,11 +66,12 @@ export function getEmailStatus(email: string) {
   )
 }
 
+// 400 means invalid, expired or used up — that has to reject, not resolve.
 export function validateAccessCode(code: string) {
   return api("/api/auth/access-code/", {
     method: "POST",
     body: JSON.stringify({ code }),
-  })
+  }).then((res) => parseOrThrow<{ valid: boolean }>(res))
 }
 
 // --- allauth ---

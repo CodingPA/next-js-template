@@ -21,6 +21,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true)
     try {
       setUser(await getSession())
+    } catch {
+      // Backend unreachable (e.g. not running yet) or erroring: keep the
+      // current user rather than throwing out of every caller.
     } finally {
       setLoading(false)
     }

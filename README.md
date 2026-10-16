@@ -22,6 +22,13 @@ backend expects. Meant to be forked per-project, not used as-is.
 - `src/components/EchoDemo.tsx` — minimal websocket demo shown on the home
   page once signed in.
 
+Not included: password reset and email verification pages. The backend's
+emails link to `/auth/password/reset/{key}` and `/auth/verify-email/{key}`,
+which 404 here, so add them before you configure SMTP or turn on
+`ACCOUNT_EMAIL_VERIFICATION` (the signup page also doesn't handle the
+pending-verification response that `mandatory` returns). The password reset
+helpers in `api.ts` are a starting point.
+
 Types in `src/lib/types.ts` are hand-written. Once you have a real backend
 running, generate them from `/api/schema/` instead (`openapi-typescript` or
 `orval`) and delete the hand-written ones.
